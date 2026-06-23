@@ -4,6 +4,11 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# 加载 .env 文件（如果存在）
+load_dotenv()
+
 
 @dataclass
 class Settings:
