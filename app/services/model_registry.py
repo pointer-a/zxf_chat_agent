@@ -57,12 +57,11 @@ class ModelRegistry:
     def _build_provider(self, model: Model, provider: Provider) -> BaseProvider:
         ptype = provider.provider_type
         if ptype == "openai_compatible":
-            api_key = provider.api_key or settings.deepseek_api_key
-            base_url = provider.base_url or settings.deepseek_base_url
+            # 始终以 .env 中的配置为准，DB 只存模型元信息
             return OpenAICompatibleProvider(
                 model=model.model_name,
-                api_key=api_key,
-                base_url=base_url,
+                api_key=settings.deepseek_api_key,
+                base_url=settings.deepseek_base_url,
             )
         else:
             raise ValueError(f"Unsupported provider type: {ptype}")
