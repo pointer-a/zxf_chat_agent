@@ -55,6 +55,18 @@ class ApiClient {
         return this.request('POST', `/api/conversations/${conversationId}/chat?user_id=${userId}`, { content });
     }
 
+    /**
+     * 流式发送消息，返回 fetch Response 对象。
+     * 调用方通过 response.body.getReader() 读取 SSE data 行。
+     */
+    sendMessageStream(conversationId, userId, content) {
+        return fetch(`${this.baseUrl}/api/conversations/${conversationId}/chat/stream?user_id=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content }),
+        });
+    }
+
     async setConversationModel(conversationId, modelId) {
         return this.request('PUT', `/api/conversations/${conversationId}/model`, { model_id: modelId });
     }

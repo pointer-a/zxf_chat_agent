@@ -263,7 +263,7 @@ function scrollToBottom() {
     }, 10);
 }
 
-// ── Send Message ──
+// ── Send Message (Streaming) ──
 async function handleSend() {
     const content = messageInput.value.trim();
     if (!content || state.loading || !state.currentConvId) return;
@@ -272,26 +272,69 @@ async function handleSend() {
     sendBtn.disabled = true;
     messageInput.disabled = true;
 
-    // Show user message immediately
+    // 立即显示用户消息
     appendMessage('user', content);
     messageInput.value = '';
-    showLoading();
     emptyState.classList.add('hidden');
 
-    try {
-        const result = await api.sendMessage(state.currentConvId, state.userId, content);
-        removeLoading();
-        appendMessage('assistant', result.message.content, result.message.created_at);
+    // 创建 assistant 消息占位
+    const assistantDiv = document.createElement('div');
+    assistantDiv.className = 'message assistant';
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    assistantDiv.appendChild(contentDiv);
+    messageList.appendChild(assistantDiv);
+    scrollToBottom();
 
-        if (result.memories_updated) {
-            console.log('Memory updated');
+    try {
+        const response = await api.sendMessageStream(state.currentConvId, state.userId, content);
+        if (!response.ok) {
+            let detail = `HTTP ${response.status}`;
+            try { const err = await response.json(); detail = err.detail || detail; } catch {}
+            throw new Error(detail);
         }
 
-        // Refresh conversation list (title may have been generated)
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';  // 保留未完成的行
+
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                try {
+                    const event = JSON.parse(line.slice(6));
+                    const type = event.type;
+                    const data = event.content;
+
+                    if (type === 'token') {
+                        contentDiv.textContent += data;
+                        scrollToBottom();
+                    } else if (type === 'title') {
+                        // 会话标题已生成，下次刷新列表时更新
+                    } else if (type === 'error') {
+                        contentDiv.textContent = '⚠️ ' + data;
+                        contentDiv.style.color = '#dc2626';
+                    } else if (type === 'done') {
+                        console.log('Stream done, memories_updated:', data.memories_updated);
+                    }
+                } catch (e) {
+                    // 忽略解析错误
+                }
+            }
+        }
+
+        // 流结束后刷新会话列表（标题可能已更新）
         await loadConversations();
     } catch (err) {
-        removeLoading();
-        appendMessage('assistant', '⚠️ 请求失败: ' + err.message);
+        contentDiv.textContent = '⚠️ 请求失败: ' + err.message;
+        contentDiv.style.color = '#dc2626';
     } finally {
         state.loading = false;
         sendBtn.disabled = false;

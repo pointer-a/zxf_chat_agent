@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -253,6 +254,44 @@ async def chat(
     return ChatResponse(
         message=MessageResponse.model_validate(assistant_msg),
         memories_updated=memories_updated,
+    )
+
+
+@router.post("/{conversation_id}/chat/stream")
+async def chat_stream(
+    conversation_id: int,
+    body: ChatRequest,
+    user_id: int = Query(..., description="User ID"),
+    db: AsyncSession = Depends(get_db),
+):
+    """发送消息，流式返回 SSE 事件（逐 token）。"""
+    # 校验会话
+    stmt = select(Conversation).where(Conversation.id == conversation_id)
+    result = await db.execute(stmt)
+    conversation = result.scalar_one_or_none()
+    if conversation is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    if conversation.user_id != user_id:
+        raise HTTPException(status_code=403, detail="Not your conversation")
+
+    # 存用户消息
+    from app.models import Message as MessageORM
+    user_msg = MessageORM(conversation_id=conversation_id, role="user", content=body.content)
+    db.add(user_msg)
+    await db.commit()
+
+    # 构建 orchestrator
+    provider = await _resolve_provider(user_id, conversation, db)
+    memory_service = MemoryService(db, provider)
+    orchestrator = ChatOrchestrator(db, provider, memory_service)
+
+    return StreamingResponse(
+        orchestrator.process_message_stream(conversation_id, body.content, skip_save_user=True),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # 禁用 nginx 缓冲
+        },
     )
 
 

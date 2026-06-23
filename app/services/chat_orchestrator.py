@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import AsyncGenerator, Optional, Tuple
@@ -18,6 +19,12 @@ logger = logging.getLogger(__name__)
 
 # Controls how often to update memory summary (every N turns)
 MEMORY_UPDATE_INTERVAL = 5
+
+
+def _sse(event_type: str, data) -> str:
+    """Build a Server-Sent Event data line."""
+    payload = json.dumps({"type": event_type, "content": data}, ensure_ascii=False)
+    return f"data: {payload}\n\n"
 
 
 def _load_skill() -> Skill:
@@ -138,6 +145,92 @@ class ChatOrchestrator:
 
         await self.db.commit()
         return assistant_msg, memories_updated
+
+    async def process_message_stream(
+        self,
+        conversation_id: int,
+        user_content: str,
+        skip_save_user: bool = False,
+    ) -> AsyncGenerator[str, None]:
+        """流式处理，以 SSE data: 行格式 yield 事件：token / title / done / error"""
+        stmt = select(Conversation).where(Conversation.id == conversation_id)
+        result = await self.db.execute(stmt)
+        conversation = result.scalar_one_or_none()
+        if conversation is None:
+            yield _sse("error", "会话不存在")
+            return
+
+        # 保存用户消息
+        if not skip_save_user:
+            user_msg = Message(conversation_id=conversation_id, role="user", content=user_content)
+            self.db.add(user_msg)
+            await self.db.flush()
+
+        # 取历史
+        history_stmt = (
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(desc(Message.created_at))
+            .limit(40)
+        )
+        result = await self.db.execute(history_stmt)
+        history_messages = list(reversed(result.scalars().all()))
+
+        # 构建 system prompt + messages
+        system_prompt = await self._build_system_prompt(conversation.user_id, user_content)
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        for msg in history_messages:
+            if msg.role in ("user", "assistant"):
+                llm_messages.append({"role": msg.role, "content": msg.content})
+
+        # 流式调用 provider
+        collected = []
+        try:
+            async for token in self.provider.complete_stream(llm_messages):
+                collected.append(token)
+                yield _sse("token", token)
+        except Exception as exc:
+            logger.error("Stream error: %s", exc)
+            yield _sse("error", str(exc))
+            return
+
+        full_text = "".join(collected).strip()
+
+        # 存 assistant 消息
+        assistant_msg = Message(conversation_id=conversation_id, role="assistant", content=full_text)
+        self.db.add(assistant_msg)
+
+        # 首轮生成标题
+        if conversation.title is None or conversation.title.strip() == "":
+            try:
+                title = await self._generate_title(user_content)
+                conversation.title = title[:200] if title else None
+                yield _sse("title", conversation.title)
+            except Exception as exc:
+                logger.warning("Title gen failed: %s", exc)
+
+        await self.db.flush()
+
+        # 记忆更新
+        memories_updated = False
+        try:
+            facts = await self.memory_service.extract_facts(
+                conversation.user_id, user_content, full_text
+            )
+            if facts:
+                memories_updated = True
+            turn_count = len(history_messages) // 2
+            if turn_count % MEMORY_UPDATE_INTERVAL == 0:
+                summary = await self.memory_service.update_summary(
+                    conversation.user_id, user_content, full_text
+                )
+                if summary:
+                    memories_updated = True
+        except Exception as exc:
+            logger.error("Memory update failed: %s", exc)
+
+        await self.db.commit()
+        yield _sse("done", {"message_id": assistant_msg.id, "memories_updated": memories_updated})
 
     async def _build_system_prompt(
         self,
