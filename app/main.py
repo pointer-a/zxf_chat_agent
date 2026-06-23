@@ -72,6 +72,13 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("数据库初始化完成。")
     await seed_default_provider()
+
+    # 打印 API key 状态（仅前后几位，不暴露完整 key）
+    key = settings.deepseek_api_key
+    if key:
+        logger.info("DeepSeek API key 已加载 (前8=%s 后8=%s len=%d)", key[:8], key[-8:], len(key))
+    else:
+        logger.warning("DeepSeek API key 未设置！")
     yield
     logger.info("服务关闭。")
 

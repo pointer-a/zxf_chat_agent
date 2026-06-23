@@ -14,7 +14,7 @@ def _load_env_file() -> None:
     """加载 .env，兼容 MokioAgent 的方式：不指定路径，由 CWD 向上搜索。
     然后展开 $VAR / ${VAR} 引用。
     """
-    load_dotenv(encoding="utf-8")
+    load_dotenv(encoding="utf-8", override=True)
 
     # 展开 $VAR / ${VAR} 引用（兼容 API_KEY="$OTHER_VAR"）
     for key in list(os.environ):
