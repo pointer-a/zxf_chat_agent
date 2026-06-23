@@ -6,8 +6,13 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# 加载 .env 文件（如果存在）
-load_dotenv()
+# 加载 .env 文件：优先找项目根目录（config.py 的父目录的父目录）
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+if _env_path.exists():
+    load_dotenv(dotenv_path=_env_path, override=False, encoding="utf-8")
+else:
+    # fallback: 当前工作目录
+    load_dotenv(encoding="utf-8")
 
 
 @dataclass
