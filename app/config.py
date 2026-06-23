@@ -11,15 +11,12 @@ _VAR_RE = re.compile(r"\$([A-Z_][A-Z0-9_]*|\{[A-Z_][A-Z0-9_]*\})")
 
 
 def _load_env_file() -> None:
-    """加载 .env，然后递归展开 $VAR / ${VAR} 引用，兼容 Linux shell 风格。"""
-    # 优先找项目根目录下的 .env（按 config.py 自身路径定位）
-    env_path = Path(__file__).resolve().parent.parent / ".env"
-    if env_path.exists():
-        load_dotenv(dotenv_path=env_path, encoding="utf-8")
-    else:
-        load_dotenv(encoding="utf-8")
+    """加载 .env，兼容 MokioAgent 的方式：不指定路径，由 CWD 向上搜索。
+    然后展开 $VAR / ${VAR} 引用。
+    """
+    load_dotenv(encoding="utf-8")
 
-    # 展开 $VAR / ${VAR} 引用（兼容 API_KEY="$OTHER_VAR" 这种写法）
+    # 展开 $VAR / ${VAR} 引用（兼容 API_KEY="$OTHER_VAR"）
     for key in list(os.environ):
         val = os.environ[key]
         if "$" not in val:
@@ -35,6 +32,15 @@ def _load_env_file() -> None:
 _load_env_file()
 
 
+def _get_env(key: str, *fallbacks: str, default: str = "") -> str:
+    """依次尝试 key, *fallbacks，返回第一个非空值。"""
+    for name in (key, *fallbacks):
+        val = os.getenv(name)
+        if val:
+            return val
+    return default
+
+
 @dataclass
 class Settings:
     # Database
@@ -48,17 +54,15 @@ class Settings:
     # DeepSeek (OpenAI-compatible API)
     # 兼容 MokioAgent 的 API_KEY / MODEL / BASE_URL 变量名
     deepseek_api_key: str = field(
-        default_factory=lambda: os.getenv("DEEPSEEK_API_KEY")
-                                 or os.getenv("API_KEY", "")
+        default_factory=lambda: _get_env("DEEPSEEK_API_KEY", "API_KEY")
     )
     deepseek_base_url: str = field(
-        default_factory=lambda: (
-            os.getenv("DEEPSEEK_BASE_URL") or os.getenv("BASE_URL", "https://api.deepseek.com/v1")
+        default_factory=lambda: _get_env(
+            "DEEPSEEK_BASE_URL", "BASE_URL", default="https://api.deepseek.com/v1"
         ).rstrip("/")
     )
     deepseek_model: str = field(
-        default_factory=lambda: os.getenv("DEEPSEEK_MODEL")
-                                 or os.getenv("MODEL", "deepseek-v4-flash")
+        default_factory=lambda: _get_env("DEEPSEEK_MODEL", "MODEL", default="deepseek-v4-flash")
     )
 
     # Skill file path
