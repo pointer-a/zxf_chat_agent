@@ -3,7 +3,21 @@
  */
 const api = new ApiClient();
 
-// ── State ──
+// ── Markdown 渲染 ──
+function renderMarkdown(text) {
+    if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+        // 降级：库未加载时显示纯文本
+        return escapeHtml(text);
+    }
+    const raw = marked.parse(text, { breaks: true, gfm: true });
+    return DOMPurify.sanitize(raw);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 let state = {
     user: null,
     userId: null,
@@ -226,7 +240,7 @@ function appendMessage(role, content, timestamp) {
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.textContent = content;
+    contentDiv.innerHTML = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
     div.appendChild(contentDiv);
 
     if (timestamp) {
@@ -286,6 +300,8 @@ async function handleSend() {
     messageList.appendChild(assistantDiv);
     scrollToBottom();
 
+    let rawText = '';  // 累积原始文本，用于 markdown 渲染
+
     try {
         const response = await api.sendMessageStream(state.currentConvId, state.userId, content);
         if (!response.ok) {
@@ -314,7 +330,8 @@ async function handleSend() {
                     const data = event.content;
 
                     if (type === 'token') {
-                        contentDiv.textContent += data;
+                        rawText += data;
+                        contentDiv.innerHTML = renderMarkdown(rawText);
                         scrollToBottom();
                     } else if (type === 'title') {
                         // 会话标题已生成，下次刷新列表时更新
