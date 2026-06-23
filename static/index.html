@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZXF 对话 Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen">
+            <div class="login-container">
+                <div class="login-card">
+                    <h1 class="login-title">ZXF 对话 Agent</h1>
+                    <p class="login-subtitle">张雪峰视角 · 多模型兼容 · 长期记忆</p>
+                    <div class="login-form">
+                        <input type="text" id="name-input" class="input" placeholder="输入你的姓名开始对话" maxlength="32" autocomplete="off">
+                        <button id="login-btn" class="btn btn-primary">进入</button>
+                    </div>
+                    <p class="login-hint">首次输入姓名即创建账号，后续同名恢复对话</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Screen -->
+        <div id="chat-screen" class="screen hidden">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="sidebar">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title">对话</h2>
+                    <button id="new-chat-btn" class="btn btn-small btn-primary" title="新建对话">+</button>
+                </div>
+                <div id="conversation-list" class="conversation-list">
+                    <!-- populated by JS -->
+                </div>
+                <div class="sidebar-footer">
+                    <span id="user-display" class="user-name"></span>
+                    <button id="logout-btn" class="btn btn-small btn-ghost">退出</button>
+                </div>
+            </aside>
+
+            <!-- Main Chat Area -->
+            <main class="chat-main">
+                <!-- Top Bar -->
+                <header class="top-bar">
+                    <button id="menu-toggle" class="btn btn-small btn-ghost menu-btn">☰</button>
+                    <div class="model-selector">
+                        <label for="model-select">模型:</label>
+                        <select id="model-select" class="select">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+                </header>
+
+                <!-- Messages -->
+                <div id="message-list" class="message-list">
+                    <div class="empty-state" id="empty-state">
+                        <p>选择一个对话或开始新对话</p>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-area">
+                    <textarea id="message-input" class="textarea" rows="3" placeholder="输入消息... (Enter 发送, Shift+Enter 换行)" disabled></textarea>
+                    <button id="send-btn" class="btn btn-primary send-btn" disabled>发送</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
