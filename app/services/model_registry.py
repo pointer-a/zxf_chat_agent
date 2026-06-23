@@ -48,7 +48,7 @@ class ModelRegistry:
 
         if settings.deepseek_api_key:
             return OpenAICompatibleProvider(
-                model="deepseek-v4-flash",
+                model=settings.deepseek_model,
                 api_key=settings.deepseek_api_key,
                 base_url=settings.deepseek_base_url,
             )

@@ -46,11 +46,19 @@ class Settings:
     )
 
     # DeepSeek (OpenAI-compatible API)
+    # 兼容 MokioAgent 的 API_KEY / MODEL / BASE_URL 变量名
     deepseek_api_key: str = field(
-        default_factory=lambda: os.getenv("DEEPSEEK_API_KEY", "")
+        default_factory=lambda: os.getenv("DEEPSEEK_API_KEY")
+                                 or os.getenv("API_KEY", "")
     )
     deepseek_base_url: str = field(
-        default_factory=lambda: os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1").rstrip("/")
+        default_factory=lambda: (
+            os.getenv("DEEPSEEK_BASE_URL") or os.getenv("BASE_URL", "https://api.deepseek.com/v1")
+        ).rstrip("/")
+    )
+    deepseek_model: str = field(
+        default_factory=lambda: os.getenv("DEEPSEEK_MODEL")
+                                 or os.getenv("MODEL", "deepseek-v4-flash")
     )
 
     # Skill file path
