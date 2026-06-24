@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import json
 import logging
 from pathlib import Path
@@ -267,6 +268,10 @@ class ChatOrchestrator:
             except Exception as exc:
                 logger.warning("Search during prompt build failed: %s", exc)
 
+        # Current time — 让 LLM 知道当前日期时间
+        now = datetime.datetime.now()
+        time_section = f"\n\n## 当前时间\n{now.strftime('%Y年%m月%d日 %H:%M')}（星期{now.isoweekday()}）"
+
         # Base rules — 整合 SKILL.md 中的搜索要求
         base_rules = """运行规则：
 1. 你是以张雪峰视角和用户聊天，基于公开言论推断，非本人观点。
@@ -288,7 +293,8 @@ class ChatOrchestrator:
 {skill.body}
 {summary_section}
 {facts_section}
-{search_section}""".strip()
+{search_section}
+{time_section}""".strip()
 
     async def _generate_title(self, first_message: str) -> str:
         """Generate a conversation title from the first user message."""
