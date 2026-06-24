@@ -95,8 +95,7 @@ class MemoryService:
             self.db.add(fact)
             saved.append(fact)
 
-        if saved:
-            await self.db.flush()
+        # 不在此 flush — 由调用方统一 commit，实现一轮保存一次
         return saved
 
     async def update_summary(
@@ -140,7 +139,7 @@ class MemoryService:
             version=(latest.version + 1) if latest else 1,
         )
         self.db.add(summary)
-        await self.db.flush()
+        # 不在此 flush — 由调用方统一 commit，实现一轮保存一次
         return summary
 
     async def get_relevant_facts(

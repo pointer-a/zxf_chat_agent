@@ -148,6 +148,20 @@ async def get_conversation_messages(conversation_id: int, db: AsyncSession = Dep
     return [AdminMessageResponse.model_validate(m) for m in messages]
 
 
+@router.delete("/conversations/{conversation_id}", status_code=204)
+async def delete_conversation(conversation_id: int, db: AsyncSession = Depends(get_db)):
+    """Delete a conversation and all its messages."""
+    stmt = select(Conversation).where(Conversation.id == conversation_id)
+    result = await db.execute(stmt)
+    conv = result.scalar_one_or_none()
+    if conv is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Messages are cascade-deleted via ORM relationship
+    await db.delete(conv)
+    await db.commit()
+
+
 @router.get("/users/{user_id}/memories", response_model=List[AdminMemoryFactResponse])
 async def list_user_memories(user_id: int, db: AsyncSession = Depends(get_db)):
     """List all memory facts for a user."""

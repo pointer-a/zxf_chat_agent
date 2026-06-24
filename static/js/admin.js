@@ -100,8 +100,34 @@ async function loadSidebarUsers() {
                 <span class="user-list-count">${u.conversation_count} 对话</span>
             </div>
         `).join('');
+        // Highlight currently selected user if any
+        if (currentUserId) {
+            const item = list.querySelector(`[data-user-id="${currentUserId}"]`);
+            if (item) item.style.background = 'var(--sidebar-active)';
+        }
     } catch (err) {
         document.getElementById('user-list').innerHTML = '<div class="loading-text">加载失败</div>';
+    }
+}
+
+// ── Delete Conversation ──
+
+async function deleteConversation(convId, userId) {
+    if (!confirm('确定要删除此对话吗？此操作不可恢复。')) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/conversations/${convId}`, { method: 'DELETE' });
+        if (!res.ok) {
+            const text = await res.text();
+            alert('删除失败：' + text);
+            return;
+        }
+        // Refresh conversation list and dashboard
+        loadUserConversations(userId);
+        loadDashboard();
+        loadSidebarUsers();
+    } catch (err) {
+        alert('删除失败：' + err.message);
     }
 }
 
@@ -129,6 +155,7 @@ async function loadUserConversations(userId) {
                     <td>${formatTime(c.updated_at)}</td>
                     <td class="action-cell">
                         <button class="btn btn-small btn-primary" onclick="showMessages(${c.id}, ${userId})">查看消息</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteConversation(${c.id}, ${userId})">删除</button>
                     </td>
                 </tr>
             `).join('');

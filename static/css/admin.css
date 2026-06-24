@@ -359,6 +359,16 @@ html, body {
     color: var(--text);
 }
 
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    font-weight: 500;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+}
+
 .btn-outline {
     background: transparent;
     color: var(--sidebar-text);
