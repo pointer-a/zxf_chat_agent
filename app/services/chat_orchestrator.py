@@ -13,6 +13,7 @@ from app.models import Conversation, Message, User
 from app.providers import BaseProvider
 from app.services.memory_service import MemoryService
 from app.services.model_registry import ModelRegistry
+from app.services.search_service import SearchService
 from zxf_agent.skill_loader import Skill, load_skill
 
 logger = logging.getLogger(__name__)
@@ -60,10 +61,12 @@ class ChatOrchestrator:
         db: AsyncSession,
         provider: BaseProvider,
         memory_service: MemoryService,
+        search_service: SearchService | None = None,
     ) -> None:
         self.db = db
         self.provider = provider
         self.memory_service = memory_service
+        self.search_service = search_service
 
     async def process_message(
         self,
@@ -237,7 +240,7 @@ class ChatOrchestrator:
         user_id: int,
         user_message: str,
     ) -> str:
-        """Build the system prompt with skill context and user memory."""
+        """Build the system prompt with skill context, user memory, and search results."""
         skill = get_skill()
 
         # Get user summary
@@ -253,15 +256,28 @@ class ChatOrchestrator:
             fact_texts = "\n".join(f"- {f.content}" for f in facts)
             facts_section = f"\n\n## 已知用户信息\n{fact_texts}"
 
-        # Combine: base rules from agent.py + skill body + memory
+        # Search result section — 在 LLM 调用前获取实时信息
+        search_section = ""
+        if self.search_service:
+            try:
+                search_result = await self.search_service.search(user_message)
+                if search_result:
+                    search_section = f"\n\n{search_result}"
+                    logger.info("Search results appended to system prompt.")
+            except Exception as exc:
+                logger.warning("Search during prompt build failed: %s", exc)
+
+        # Base rules — 整合 SKILL.md 中的搜索要求
         base_rules = """运行规则：
 1. 你是以张雪峰视角和用户聊天，基于公开言论推断，非本人观点。
 2. 用户说"退出""切回正常""不用扮演了"时，停止角色扮演。
-3. 涉及具体专业、院校、行业、就业、薪资、录取、政策等事实问题时，不要凭空编数据。
+3. 涉及具体专业、院校、行业、就业、薪资、录取、政策等事实问题时，必须参考实时搜索结果，不可凭训练语料编造。
 4. 如果无法获取实时数据，必须先追问必要背景，或明确说需要查数据。
 5. 回答要先给判断，再解释；短句、高密度、中文口语。
 6. 给教育和职业建议时，优先追问分数/学历、省份、家庭资源、目标城市、风险承受能力。
-7. 不要输出内部分类过程，直接像一个真实对话 agent 一样回答。"""
+7. 不要输出内部分类过程，直接像一个真实对话 agent 一样回答。
+8. 当 system prompt 中包含「实时搜索结果」时，必须优先引用其中的数据而非训练语料中的知识。
+   如果搜索结果不足以回答，请明确告诉用户没有找到相关信息。"""
 
         return f"""你是一个对话 agent，必须严格基于下面的 Agent Skill 运作。
 
@@ -271,7 +287,8 @@ class ChatOrchestrator:
 
 {skill.body}
 {summary_section}
-{facts_section}""".strip()
+{facts_section}
+{search_section}""".strip()
 
     async def _generate_title(self, first_message: str) -> str:
         """Generate a conversation title from the first user message."""

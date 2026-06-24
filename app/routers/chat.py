@@ -24,6 +24,7 @@ from app.schemas import (
 from app.services.chat_orchestrator import ChatOrchestrator
 from app.services.memory_service import MemoryService
 from app.services.model_registry import ModelRegistry
+from app.services.search_service import SearchService
 
 router = APIRouter(prefix="/api/conversations", tags=["chat"])
 
@@ -237,9 +238,10 @@ async def chat(
 
     # Create memory service (use same provider for memory extraction)
     memory_service = MemoryService(db, provider)
+    search_service = SearchService()
 
     # Create orchestrator
-    orchestrator = ChatOrchestrator(db, provider, memory_service)
+    orchestrator = ChatOrchestrator(db, provider, memory_service, search_service)
 
     # Process message (orchestrator will skip saving user msg)
     try:
@@ -283,7 +285,8 @@ async def chat_stream(
     # 构建 orchestrator
     provider = await _resolve_provider(user_id, conversation, db)
     memory_service = MemoryService(db, provider)
-    orchestrator = ChatOrchestrator(db, provider, memory_service)
+    search_service = SearchService()
+    orchestrator = ChatOrchestrator(db, provider, memory_service, search_service)
 
     return StreamingResponse(
         orchestrator.process_message_stream(conversation_id, body.content, skip_save_user=True),

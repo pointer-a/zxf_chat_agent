@@ -72,6 +72,23 @@ class Settings:
         )
     )
 
+    # Search / web fetch
+    search_enabled: bool = field(
+        default_factory=lambda: os.getenv("SEARCH_ENABLED", "true").lower() == "true"
+    )
+    search_api_key: str = field(
+        default_factory=lambda: os.getenv("BING_SEARCH_API_KEY", "")
+    )
+    search_mkt: str = field(
+        default_factory=lambda: os.getenv("SEARCH_MKT", "zh-CN")
+    )
+    search_count: int = field(
+        default_factory=lambda: int(os.getenv("SEARCH_COUNT", "5"))
+    )
+    search_fallback: bool = field(
+        default_factory=lambda: os.getenv("SEARCH_FALLBACK", "true").lower() == "true"
+    )
+
     # Server
     host: str = field(default_factory=lambda: os.getenv("HOST", "0.0.0.0"))
     port: int = field(default_factory=lambda: int(os.getenv("PORT", "8000")))
