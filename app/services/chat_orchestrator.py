@@ -288,7 +288,7 @@ class ChatOrchestrator:
    如果搜索结果不足以回答，请明确告诉用户没有找到相关信息。"""
 
         return f"""你是一个对话 agent，必须严格基于下面的 Agent Skill 运作。
-
+{time_section}
 {base_rules}
 
 以下是必须遵循的 skill 内容：
@@ -296,8 +296,7 @@ class ChatOrchestrator:
 {skill.body}
 {summary_section}
 {facts_section}
-{search_section}
-{time_section}""".strip()
+{search_section}""".strip()
 
     async def _generate_title(self, first_message: str) -> str:
         """Generate a conversation title from the first user message."""
