@@ -5,7 +5,6 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.models import (
@@ -179,3 +178,30 @@ async def list_user_memories(user_id: int, db: AsyncSession = Depends(get_db)):
     facts = mem_result.scalars().all()
 
     return [AdminMemoryFactResponse.model_validate(f) for f in facts]
+
+
+@router.delete("/users/{user_id}/memories", status_code=204)
+async def clear_user_memories(user_id: int, db: AsyncSession = Depends(get_db)):
+    """Delete all memory facts and summaries for a user."""
+    user_stmt = select(User).where(User.id == user_id)
+    user_result = await db.execute(user_stmt)
+    if user_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Delete all memory facts
+    fact_stmt = select(MemoryFact).where(MemoryFact.user_id == user_id)
+    fact_result = await db.execute(fact_stmt)
+    facts = fact_result.scalars().all()
+    for fact in facts:
+        await db.delete(fact)
+
+    # Delete all memory summaries
+    sum_stmt = select(MemorySummary).where(MemorySummary.user_id == user_id)
+    sum_result = await db.execute(sum_stmt)
+    summaries = sum_result.scalars().all()
+    for summary in summaries:
+        await db.delete(summary)
+
+    await db.commit()
+    logger = __import__("logging").getLogger(__name__)
+    logger.info("Cleared %d facts and %d summaries for user %d", len(facts), len(summaries), user_id)

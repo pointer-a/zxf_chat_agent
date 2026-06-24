@@ -197,6 +197,27 @@ window.showUserMemories = async function (userId, userName) {
     }
 };
 
+// ── Clear Memories ──
+
+document.getElementById('clear-memories-btn').addEventListener('click', async () => {
+    if (!currentUserId) return;
+    if (!confirm('确定要清除该用户的所有记忆吗？此操作不可恢复。')) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/users/${currentUserId}/memories`, { method: 'DELETE' });
+        if (!res.ok) {
+            const text = await res.text();
+            alert('清除失败：' + text);
+            return;
+        }
+        // Refresh memories view + dashboard stats
+        showUserMemories(currentUserId, document.getElementById('user-mem-title').textContent.replace(' 的记忆', ''));
+        loadDashboard();
+    } catch (err) {
+        alert('清除失败：' + err.message);
+    }
+});
+
 // ── Messages ──
 
 async function showMessages(conversationId, userId) {
