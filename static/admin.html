@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 — ZXF 对话 Agent</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Top Nav -->
+        <header class="top-nav">
+            <div class="nav-left">
+                <h1 class="nav-title">管理后台</h1>
+                <span class="nav-subtitle">ZXF 对话 Agent</span>
+            </div>
+            <div class="nav-right">
+                <a href="/" class="btn btn-small btn-outline">← 返回主站</a>
+            </div>
+        </header>
+
+        <div class="app-body">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <button class="sidebar-item active" data-view="dashboard" id="nav-dashboard">
+                        <span class="sidebar-icon">📊</span>
+                        仪表盘
+                    </button>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-label">用户列表</div>
+                    <div id="user-list" class="user-list">
+                        <!-- populated by JS -->
+                        <div class="loading-text">加载中...</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content" id="main-content">
+                <!-- Dashboard View (default) -->
+                <div id="view-dashboard" class="view active">
+                    <h2 class="view-title">仪表盘</h2>
+                    <div class="stats-grid" id="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-users">—</div>
+                            <div class="stat-label">用户</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-conversations">—</div>
+                            <div class="stat-label">对话</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-messages">—</div>
+                            <div class="stat-label">消息</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-memories">—</div>
+                            <div class="stat-label">记忆</div>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title" style="margin-top: 32px;">最近用户</h3>
+                    <div class="table-wrap">
+                        <table class="data-table" id="user-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>姓名</th>
+                                    <th>显示名</th>
+                                    <th>对话数</th>
+                                    <th>记忆数</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-table-body">
+                                <tr><td colspan="7" class="empty-cell">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- User Conversations View -->
+                <div id="view-user-conversations" class="view">
+                    <div class="view-header">
+                        <button class="btn btn-small btn-ghost" id="back-from-user">← 返回</button>
+                        <h2 class="view-title" id="user-conv-title">用户的对话</h2>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="conv-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>标题</th>
+                                    <th>模型</th>
+                                    <th>消息数</th>
+                                    <th>创建时间</th>
+                                    <th>更新时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="conv-table-body">
+                                <tr><td colspan="7" class="empty-cell">选择用户查看对话</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- User Memories View -->
+                <div id="view-user-memories" class="view">
+                    <div class="view-header">
+                        <button class="btn btn-small btn-ghost" id="back-from-memories">← 返回</button>
+                        <h2 class="view-title" id="user-mem-title">用户的记忆</h2>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table" id="mem-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>内容</th>
+                                    <th>分类</th>
+                                    <th>置信度</th>
+                                    <th>创建时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mem-table-body">
+                                <tr><td colspan="5" class="empty-cell">选择用户查看记忆</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Messages View -->
+                <div id="view-messages" class="view">
+                    <div class="view-header">
+                        <button class="btn btn-small btn-ghost" id="back-from-messages">← 返回</button>
+                        <h2 class="view-title" id="msg-title">对话消息</h2>
+                    </div>
+                    <div id="message-list" class="message-list">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="/static/js/admin.js"></script>
+</body>
+</html>

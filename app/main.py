@@ -100,12 +100,13 @@ app.add_middleware(
 
 
 # ── API routes ──
-from app.routers import auth, chat, memories, models_api  # noqa: E402
+from app.routers import admin, auth, chat, memories, models_api  # noqa: E402
 
 app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(models_api.router)
 app.include_router(memories.router)
+app.include_router(admin.router)
 
 
 @app.get("/api/health")

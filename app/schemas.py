@@ -133,3 +133,63 @@ class MemorySummaryResponse(BaseModel):
     created_at: datetime.datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ── Admin ──
+
+class AdminStats(BaseModel):
+    user_count: int
+    conversation_count: int
+    message_count: int
+    memory_fact_count: int
+
+
+class AdminUserRow(BaseModel):
+    id: int
+    name: str
+    display_name: Optional[str] = None
+    conversation_count: int = 0
+    memory_fact_count: int = 0
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminUserDetail(BaseModel):
+    id: int
+    name: str
+    display_name: Optional[str] = None
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminConversationRow(BaseModel):
+    id: int
+    title: Optional[str] = None
+    model_name: Optional[str] = None
+    message_count: int = 0
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminMessageResponse(BaseModel):
+    id: int
+    conversation_id: int
+    role: str
+    content: str
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminMemoryFactResponse(BaseModel):
+    id: int
+    content: str
+    category: Optional[str] = None
+    confidence: float
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
