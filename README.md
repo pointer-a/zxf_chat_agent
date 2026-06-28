@@ -3,7 +3,7 @@
 # 张雪峰.skill
 
 <p align="center">
-  <img src="assets/fengmian.jpeg" alt="zhangxuefeng-skill Hero Animation" />
+  <img src="assets/封面.jpeg" alt="zhangxuefeng-skill Hero Animation" />
   <br/>
 </p>
 
