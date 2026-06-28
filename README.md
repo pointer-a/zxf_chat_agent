@@ -3,9 +3,8 @@
 # 张雪峰.skill
 
 <p align="center">
-  <img src="assets/hero.gif" alt="zhangxuefeng-skill Hero Animation" />
+  <img src="assets/fengmian.jpeg" alt="zhangxuefeng-skill Hero Animation" />
   <br/>
-  <sub>动画由 <a href="https://github.com/alchaincyf/huashu-design">huashu-design</a> skill 制作</sub>
 </p>
 
 > *「社会就是一个大筛子，用学历筛孩子，用房子筛父母，用工作筛家庭。」*
@@ -354,18 +353,7 @@ MIT — 随便用，随便改，随便蒸馏。
 
 ## 关于作者
 
-**花叔 Huashu** — AI Native Coder，独立开发者，代表作：小猫补光灯（AppStore 付费榜 Top1）
-
-| 平台 | 链接 |
-|------|------|
-| 🌐 官网 | [bookai.top](https://bookai.top) · [huasheng.ai](https://www.huasheng.ai) |
-| 𝕏 Twitter | [@AlchainHust](https://x.com/AlchainHust) |
-| 📺 B站 | [花叔](https://space.bilibili.com/14097567) |
-| ▶️ YouTube | [@Alchain](https://www.youtube.com/@Alchain) |
-| 📕 小红书 | [花叔](https://www.xiaohongshu.com/user/profile/5abc6f17e8ac2b109179dfdf) |
-| 💬 公众号 | 微信搜「花叔」或扫码关注 ↓ |
-
-<img src="wechat-qrcode.jpg" alt="公众号二维码" width="360">
+基于**花叔 Huashu** 的zxfSkill改写。
 
 <div align="center">
 
